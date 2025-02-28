@@ -1,12 +1,45 @@
 from setuptools import setup, find_packages, Extension
 import os
+import platform
+import sys
+
+# コンパイラオプションを設定
+extra_compile_args = [
+    '-std=c++17',     # 最新のC++機能を使用
+    '-O3',            # 最高レベルの最適化
+    '-march=native',  # CPUアーキテクチャに最適化
+    '-ffast-math',    # 浮動小数点演算の最適化
+    '-flto',          # リンク時最適化
+    '-funroll-loops', # ループ展開
+    '-fopenmp',       # OpenMPによるマルチスレッド処理
+]
+
+# macOSの場合は-fopenmpを除外
+if platform.system() == "Darwin":
+    extra_compile_args.remove('-fopenmp')
+
+# リンカーオプションを設定
+extra_link_args = ['-flto']  # リンク時最適化
+if platform.system() != "Darwin":
+    extra_link_args.append('-fopenmp')
 
 # C++拡張モジュールの設定
 cseg_renderer = Extension(
     'cseg.lib.cseg_renderer',
     sources=['cseg/cpp/cseg_renderer.cpp'],
     include_dirs=[],  # pybind11のインクルードパスは後で自動追加
-    extra_compile_args=['-std=c++11', '-O3', '-march=native'],
+    extra_compile_args=extra_compile_args,
+    extra_link_args=extra_link_args,
+    language='c++',
+)
+
+# vcf2csegのビルド設定
+vcf2cseg_ext = Extension(
+    'cseg.bin.vcf2cseg',
+    sources=['cseg/cpp/vcf2cseg.cpp'],
+    extra_compile_args=extra_compile_args,
+    extra_link_args=extra_link_args,
+    language='c++',
 )
 
 def get_pybind11_include():
@@ -28,7 +61,7 @@ setup(
     author='Your Name',
     author_email='your.email@example.com',
     packages=find_packages(),
-    ext_modules=[cseg_renderer],
+    ext_modules=[cseg_renderer, vcf2cseg_ext],
     install_requires=[
         'flask',
         'pillow',
@@ -39,6 +72,7 @@ setup(
         'console_scripts': [
             'cseg-create-db=cseg.cli.create_db:main',
             'cseg-server=cseg.cli.server:main',
+            'vcf2cseg=cseg.bin.vcf2cseg:main',
         ],
     },
     python_requires='>=3.7',
