@@ -3,7 +3,7 @@ from flask import Flask, request, send_file
 from PIL import Image
 import io
 import sqlite3
-import cseg_renderer
+from cseg.lib import cseg_renderer
 import os
 import tempfile
 
@@ -107,5 +107,8 @@ def serve_image():
     except Exception as e:
         return str(e), 500
 
-if __name__ == '__main__':
+def main():
     app.run(host='localhost', port=5000)
+
+if __name__ == '__main__':
+    main()

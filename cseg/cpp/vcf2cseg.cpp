@@ -1,7 +1,11 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
+
+namespace py = pybind11;
 
 using namespace std;
 
@@ -47,7 +51,7 @@ string convertGenotype(const string &genotype)
 }
 
 // contigごとのデータを処理する関数
-void processContigData(const string &contig, const vector<VcfRecord> &contigData)
+void processContigData(const string &contig, const vector<VcfRecord> &contigData, stringstream &output)
 {
     vector<CsegRecord> contigCsegData;
     for (int i = 0; i < contigData.size(); i++)
@@ -99,56 +103,46 @@ void processContigData(const string &contig, const vector<VcfRecord> &contigData
                 }
                 lastpos = i;
             }
+            else if (contigCsegData[i].genotypes[j] != "0")
+            {
+                lastpos = i;
+            }
         }
     }
     for (int i = 0; i < contigCsegData.size(); i++)
     {
-        cout << contigCsegData[i].contig << "\t" << contigCsegData[i].pos << "\t";
+        output << contigCsegData[i].contig << "\t" << contigCsegData[i].pos << "\t";
         for (int j = 0; j < contigCsegData[i].genotypes.size(); j++)
         {
-            cout << contigCsegData[i].genotypes[j];
+            output << contigCsegData[i].genotypes[j];
             if (j < contigCsegData[i].genotypes.size() - 1)
             {
-                cout << "\t";
+                output << "\t";
             }
         }
-        cout << endl;
+        output << endl;
     }
-
-    // for (int j = 0; j < contigCsegData[0].genotypes.size(); j++)
-    // {
-
-    //     cout << contigCsegData[0].contig << "\t" << contigCsegData[0].pos << "\t";
-    //     for (int i = 0; i < contigCsegData.size(); i++)
-    //     {
-    //         cout << contigCsegData[i].genotypes[j];
-    //         if (i < contigCsegData.size() - 1)
-    //         {
-    //             cout << "\t";
-    //         }
-    //     }
-    //     cout << endl;
-    // }
 }
 
-int main()
-{
+string convert_vcf_to_cseg(const string& vcf_content) {
+    stringstream output;
     string line;
     string currentContig;
     vector<VcfRecord> currentContigData;
+    istringstream iss(vcf_content);
 
-    while (getline(cin, line))
+    while (getline(iss, line))
     {
-        vector<string> fields;
-        string field;
-        istringstream iss(line);
-
         if (line[0] == '#')
         {
             continue;
         }
 
-        while (getline(iss, field, '\t'))
+        vector<string> fields;
+        string field;
+        istringstream line_iss(line);
+
+        while (getline(line_iss, field, '\t'))
         {
             fields.push_back(field);
         }
@@ -172,7 +166,7 @@ int main()
             // 新しいcontigが来たら、前のcontigのデータを処理
             if (!currentContig.empty() && currentContig != fields[0])
             {
-                processContigData(currentContig, currentContigData);
+                processContigData(currentContig, currentContigData, output);
                 currentContigData.clear();
             }
 
@@ -184,8 +178,51 @@ int main()
     // 最後のcontigのデータを処理
     if (!currentContigData.empty())
     {
-        processContigData(currentContig, currentContigData);
+        processContigData(currentContig, currentContigData, output);
     }
 
-    return 0;
+    return output.str();
+}
+
+PYBIND11_MODULE(vcf2cseg_cpp, m) {
+    m.doc() = "VCF to CSEG converter";
+    
+    py::class_<VcfRecord>(m, "VcfRecord")
+        .def(py::init<>())
+        .def_readwrite("contig", &VcfRecord::contig)
+        .def_readwrite("pos", &VcfRecord::pos)
+        .def_readwrite("id", &VcfRecord::id)
+        .def_readwrite("ref", &VcfRecord::ref)
+        .def_readwrite("alt", &VcfRecord::alt)
+        .def_readwrite("qual", &VcfRecord::qual)
+        .def_readwrite("filter", &VcfRecord::filter)
+        .def_readwrite("info", &VcfRecord::info)
+        .def_readwrite("format", &VcfRecord::format)
+        .def_readwrite("samples", &VcfRecord::samples);
+    
+    py::class_<CsegRecord>(m, "CsegRecord")
+        .def(py::init<>())
+        .def_readwrite("contig", &CsegRecord::contig)
+        .def_readwrite("pos", &CsegRecord::pos)
+        .def_readwrite("genotypes", &CsegRecord::genotypes);
+    
+    m.def("convert_vcf_to_cseg", &convert_vcf_to_cseg, "Convert VCF content to CSEG format",
+          py::arg("vcf_content"));
+    
+    m.def("main", []() {
+        string input;
+        string line;
+        while (getline(cin, line)) {
+            input += line + "\n";
+        }
+        
+        try {
+            string output = convert_vcf_to_cseg(input);
+            cout << output;
+            return 0;
+        } catch (const exception& e) {
+            cerr << "Error: " << e.what() << endl;
+            return 1;
+        }
+    }, "Command line interface for VCF to CSEG conversion");
 }

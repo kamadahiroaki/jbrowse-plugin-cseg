@@ -4,10 +4,13 @@ JBrowse 2プラグインとPythonバックエンドを含むCSEGビジュアラ�
 
 ## インストール方法
 
-### 1. npmパッケージのインストール
+### 1. インストール
 
 ```bash
-npm install @jbrowse/plugin-cseg
+git clone git@github.com:kamadahiroaki/jbrowse-plugin-cseg.git
+cd jbrowse-plugin-cseg
+yarn install
+pip install .
 ```
 
 ### 2. Pythonパッケージのインストール
