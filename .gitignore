@@ -1,3 +1,9 @@
+*.png
+*.db
+*.cseg
+.so
+
+
 # Logs
 logs
 *.log
@@ -124,3 +130,12 @@ cypress/screenshots
 
 # Ignore code editor
 .vscode
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+dist/
+build/
+*.egg-info/

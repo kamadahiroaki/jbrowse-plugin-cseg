@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
-  "name": "jbrowse-plugin-template",
+  "name": "cseg",
   "keywords": [
     "jbrowse",
     "jbrowse2"
@@ -19,7 +19,7 @@
     },
     "jbrowse": {
       "plugin": {
-        "name": "Template"
+        "name": "Cseg"
       }
     }
   },
@@ -48,7 +48,7 @@
     "postversion": "git push --follow-tags"
   },
   "jbrowse-plugin": {
-    "name": "Template"
+    "name": "Cseg"
   },
   "peerDependencies": {
     "@jbrowse/core": "^2.0.0"
@@ -60,6 +60,7 @@
     "@jbrowse/cli": "^2.6.1",
     "@jbrowse/core": "^2.6.1",
     "@jbrowse/development-tools": "^2.1.1",
+    "@jbrowse/plugin-linear-genome-view": "^3.0.3",
     "@mui/material": "^5.10.5",
     "@mui/system": "^5.10.5",
     "@mui/x-data-grid": "^7.6.1",
@@ -102,5 +103,8 @@
     "tss-react": "^4.8.6",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "repository": "https://github.com/GMOD/jbrowse-plugin-template.git",
+  "author": "hkamada <kamahirodada@gmail.com>",
+  "license": "MIT"
 }
