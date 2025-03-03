@@ -18,10 +18,6 @@ extra_compile_args = [
 if platform.system() == "Darwin":
     extra_compile_args.remove('-fopenmp')
 
-# Windowsの場合は異なるコンパイラオプションを使用
-if platform.system() == 'Windows':
-    extra_compile_args = ['/O2']  # 最適化オプション
-
 # リンカーオプションを設定
 extra_link_args = ['-flto']  # リンク時最適化
 if platform.system() != "Darwin":
@@ -39,20 +35,12 @@ cseg_renderer = Extension(
 
 # vcf2csegのビルド設定
 vcf2cseg_ext = Extension(
-    'cseg.bin.vcf2cseg',
+    'cseg.bin.vcf2cseg_cpp',
     sources=['cseg/cpp/vcf2cseg.cpp'],
+    include_dirs=[],  # pybind11のインクルードパスは後で自動追加
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     language='c++',
-)
-
-# vcf2cseg_cppモジュールのビルド設定
-vcf2cseg_cpp_ext = Extension(
-    'cseg.cpp.vcf2cseg_cpp',
-    sources=['cseg/cpp/vcf2cseg.cpp'],
-    include_dirs=[],  # pybind11のインクルードパスは後で追加
-    extra_compile_args=extra_compile_args,
-    language='c++'
 )
 
 def get_pybind11_include():
@@ -66,7 +54,7 @@ def get_pybind11_include():
 pybind11_include = get_pybind11_include()
 if pybind11_include:
     cseg_renderer.include_dirs.append(pybind11_include)
-    vcf2cseg_cpp_ext.include_dirs.append(pybind11_include)
+    vcf2cseg_ext.include_dirs.append(pybind11_include)
 
 setup(
     name='jbrowse-plugin-cseg',
@@ -75,7 +63,7 @@ setup(
     author='Your Name',
     author_email='your.email@example.com',
     packages=find_packages(),
-    ext_modules=[cseg_renderer, vcf2cseg_ext, vcf2cseg_cpp_ext],
+    ext_modules=[cseg_renderer, vcf2cseg_ext],
     install_requires=[
         'flask',
         'pillow',
@@ -84,10 +72,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'cseg-create-db=cseg.cli.create_db:main',
-            'cseg-server=cseg.cli.server:main',
-            'vcf2cseg=cseg.bin.vcf2cseg:main',
-            'vcf2cseg_cpp=cseg.cpp.vcf2cseg_cpp:main',
+            'vcf2cseg=cseg.bin.vcf2cseg_cpp:main',
         ],
     },
     python_requires='>=3.7',
