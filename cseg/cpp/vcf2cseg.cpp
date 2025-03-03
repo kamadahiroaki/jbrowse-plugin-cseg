@@ -130,58 +130,68 @@ string convert_vcf_to_cseg(const string& vcf_content) {
     string currentContig;
     vector<VcfRecord> currentContigData;
     istringstream iss(vcf_content);
+    size_t lineCount = 0;
 
-    while (getline(iss, line))
-    {
-        if (line[0] == '#')
-        {
-            continue;
-        }
-
-        vector<string> fields;
-        string field;
-        istringstream line_iss(line);
-
-        while (getline(line_iss, field, '\t'))
-        {
-            fields.push_back(field);
-        }
-
-        if (fields.size() >= numFields)
-        {
-            VcfRecord record;
-            record.contig = fields[0];
-            record.pos = stoi(fields[1]);
-            record.id = fields[2];
-            record.ref = fields[3];
-            record.alt = fields[4];
-            record.qual = fields[5];
-            record.filter = fields[6];
-            record.info = fields[7];
-            record.format = fields[8];
-            for (size_t i = numFields - 1; i < fields.size(); i++)
-            {
-                record.samples.push_back(convertGenotype(fields[i]));
-            }
-            // 新しいcontigが来たら、前のcontigのデータを処理
-            if (!currentContig.empty() && currentContig != fields[0])
-            {
-                processContigData(currentContig, currentContigData, output);
-                currentContigData.clear();
+    try {
+        while (getline(iss, line)) {
+            if (line.empty() || line[0] == '#') {
+                continue;
             }
 
-            currentContig = fields[0];
-            currentContigData.push_back(record);
+            vector<string> fields;
+            string field;
+            istringstream line_iss(line);
+
+            while (getline(line_iss, field, '\t')) {
+                fields.push_back(field);
+            }
+
+            if (fields.size() >= numFields) {
+                VcfRecord record;
+                record.contig = fields[0];
+                record.pos = stoi(fields[1]);
+                record.id = fields[2];
+                record.ref = fields[3];
+                record.alt = fields[4];
+                record.qual = fields[5];
+                record.filter = fields[6];
+                record.info = fields[7];
+                record.format = fields[8];
+                for (size_t i = numFields - 1; i < fields.size(); i++) {
+                    record.samples.push_back(convertGenotype(fields[i]));
+                }
+
+                // 新しいcontigが来たら、前のcontigのデータを処理
+                if (!currentContig.empty() && currentContig != fields[0]) {
+                    processContigData(currentContig, currentContigData, output);
+                    currentContigData.clear();
+                }
+
+                currentContig = fields[0];
+                currentContigData.push_back(record);
+            }
+
+            lineCount++;
+            if (lineCount % 1000 == 0) {
+                // メモリ使用量を確認し、必要に応じて中間処理を行う
+                if (currentContigData.size() > 10000) {
+                    processContigData(currentContig, currentContigData, output);
+                    currentContigData.clear();
+                    currentContig = "";
+                }
+            }
         }
-    }
 
-    // 最後のcontigのデータを処理
-    if (!currentContigData.empty())
-    {
-        processContigData(currentContig, currentContigData, output);
-    }
+        // 最後のcontigのデータを処理
+        if (!currentContigData.empty()) {
+            processContigData(currentContig, currentContigData, output);
+        }
 
-    return output.str();
+        return output.str();
+    }
+    catch (const std::exception& e) {
+        throw std::runtime_error(string("Error processing VCF at line ") + to_string(lineCount) + ": " + e.what());
+    }
 }
 
 PYBIND11_MODULE(vcf2cseg_cpp, m) {
