@@ -10,6 +10,7 @@ JBrowse 2プラグインとPythonバックエンドを含むCSEGビジュアラ�
 git clone git@github.com:kamadahiroaki/jbrowse-plugin-cseg.git
 cd jbrowse-plugin-cseg
 yarn install
+yarn setup
 pip install .
 ```
 

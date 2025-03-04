@@ -73,6 +73,8 @@ setup(
     entry_points={
         'console_scripts': [
             'vcf2cseg=cseg.bin.vcf2cseg_cpp:main',
+            'cseg-server=cseg.cli.server:main',
+            'cseg-create-db=cseg.cli.create_db:main',
         ],
     },
     python_requires='>=3.7',

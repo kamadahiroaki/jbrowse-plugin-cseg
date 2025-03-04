@@ -108,7 +108,7 @@ def serve_image():
         return str(e), 500
 
 def main():
-    app.run(host='localhost', port=5000)
+    app.run(host='localhost', port=5002)
 
 if __name__ == '__main__':
     main()
