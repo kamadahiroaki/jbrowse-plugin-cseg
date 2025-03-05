@@ -12,7 +12,6 @@ extra_compile_args = [
     '-flto',          # リンク時最適化
     '-funroll-loops', # ループ展開
     '-fopenmp',       # OpenMPによるマルチスレッド処理
-    '-v',             # 詳細なコンパイル情報を表示
 ]
 
 # macOSの場合は-fopenmpを除外
@@ -20,7 +19,7 @@ if platform.system() == "Darwin":
     extra_compile_args.remove('-fopenmp')
 
 # リンカーオプションを設定
-extra_link_args = ['-flto', '-v']  # リンク時最適化と詳細情報表示
+extra_link_args = ['-flto']  # リンク時最適化
 if platform.system() != "Darwin":
     extra_link_args.append('-fopenmp')
 
@@ -92,5 +91,4 @@ setup(
     python_requires='>=3.7',
     include_package_data=True,
     package_data=package_data,
-    zip_safe=False,  # C++拡張モジュールを使用するため
 )

@@ -27,12 +27,9 @@ RUN pip install --upgrade pip \
 # Install other dependencies and build the package with verbose output
 RUN pip install flask-cors pillow numpy matplotlib tqdm \
     && CFLAGS="-I$(python -c 'import pybind11; print(pybind11.get_include())')" \
-       VERBOSE=1 pip install -v -e . \
-    && python -c "from cseg.lib import cseg_renderer; print('cseg_renderer successfully imported')" \
-    && python -c "from cseg.bin import vcf2cseg_cpp; print('vcf2cseg_cpp successfully imported')"
-
-# List all installed files
-RUN find /opt/venv/lib/python3.10/site-packages/cseg -type f
+       VERBOSE=1 pip install -e . \
+    && python -c "import cseg.lib.cseg_renderer; print('cseg_renderer successfully imported')" \
+    && python -c "import cseg.bin.vcf2cseg_cpp; print('vcf2cseg_cpp successfully imported')"
 
 # Create data directories
 RUN cseg-init
