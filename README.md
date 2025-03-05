@@ -20,6 +20,24 @@ pip install .
 pip install jbrowse-plugin-cseg
 ```
 
+### 3. Docker Installation
+
+To run the plugin using Docker:
+
+1. Make sure you have Docker and Docker Compose installed on your system.
+
+2. Build and start the container:
+```bash
+docker-compose up --build
+```
+
+3. The development server will be available at http://localhost:5000
+
+To rebuild the plugin after making changes:
+```bash
+docker-compose exec jbrowse-plugin-cseg yarn build
+```
+
 ## 使用方法
 
 ### 1. CSEGデータベースの作成
