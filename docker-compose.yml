@@ -6,6 +6,24 @@ services:
       - "5000:5000"
     volumes:
       - .:/app
+      - ./data:/data  # データ用のボリューム
     environment:
       - FLASK_ENV=development
     command: cseg-server
+
+  # 追加のサービス定義（必要に応じて使用）
+  vcf2cseg:
+    build: .
+    volumes:
+      - .:/app
+      - ./data:/data
+    command: vcf2cseg
+    profiles: ["tools"]  # docker-compose --profile tools up vcf2cseg で実行
+
+  create-db:
+    build: .
+    volumes:
+      - .:/app
+      - ./data:/data
+    command: cseg-create-db
+    profiles: ["tools"]  # docker-compose --profile tools up create-db で実行

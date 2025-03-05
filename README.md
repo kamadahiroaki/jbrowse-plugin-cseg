@@ -4,78 +4,89 @@ JBrowse 2プラグインとPythonバックエンドを含むCSEGビジュアラ�
 
 ## インストール方法
 
+### 0. nodeのインストール
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt-get install -y nodejs
+sudo npm install -g yarn
+```
+
 ### 1. インストール
 
 ```bash
-git clone git@github.com:kamadahiroaki/jbrowse-plugin-cseg.git
+# リポジトリのクローン
+git clone https://github.com/kamadahiroaki/jbrowse-plugin-cseg.git
 cd jbrowse-plugin-cseg
+
+# プラグインのインストールとビルド
 yarn install
+
+# JBrowseのセットアップと起動
 yarn setup
-pip install .
 ```
 
-### 2. Pythonパッケージのインストール
+これにより：
+- JBrowseがport:8999で起動
+- プラグインがport:9000で動作
+- localhost:8999でプラグイン込のJBrowseにアクセス可能
+
+### 2. 周辺ツール環境のセットアップ（Docker）
+
+VCFファイルの変換やデータベース作成などの周辺ツールはDockerで提供されています：
 
 ```bash
-pip install jbrowse-plugin-cseg
-```
+# Dockerイメージのビルド
+docker-compose build
 
-### 3. Docker Installation
-
-To run the plugin using Docker:
-
-1. Make sure you have Docker and Docker Compose installed on your system.
-
-2. Build and start the container:
-```bash
-docker-compose up --build
-```
-
-3. The development server will be available at http://localhost:5000
-
-To rebuild the plugin after making changes:
-```bash
-docker-compose exec jbrowse-plugin-cseg yarn build
+# cseg-serverの起動（バックグラウンド実行）
+docker-compose up -d
 ```
 
 ## 使用方法
 
 ### 1. CSEGデータベースの作成
 
-```bash
-cseg-create-db input.cseg
-```
-
-これにより`input.db`が作成されます。
-
-### 2. サーバーの起動
+VCFファイルからCSEGデータベースを作成：
 
 ```bash
-cseg-server
+# VCFファイルの変換
+docker-compose run --rm vcf2cseg [入力VCFファイル] [出力CSEGファイル]
+
+# データベースの作成
+docker-compose run --rm create-db [入力CSEGファイル] [出力DBファイル]
 ```
 
-サーバーがlocalhost:5000で起動します。
+### 2. サーバーの操作
 
-### 3. JBrowseの設定
+```bash
+# サーバーの起動
+docker-compose up -d
 
-JBrowseの設定ファイルに以下を追加：
+# サーバーの停止
+docker-compose down
 
-```json
-{
-  "plugins": [
-    {
-      "name": "CSEG",
-      "url": "http://localhost:5000"
-    }
-  ]
-}
+# ログの確認
+docker-compose logs -f
 ```
 
-## 要件
+### 3. データの配置
 
-- Python >= 3.7
-- C++11対応コンパイラ
-- Node.js >= 14
+データファイルは`./data`ディレクトリに配置することを推奨します：
+
+```
+./data/
+  ├── vcf/      # 入力VCFファイル
+  ├── cseg/     # 変換後のCSEGファイル
+  └── db/       # 作成したデータベースファイル
+```
+
+## 開発環境
+
+- Python 3.7以上
+- Node.js
+- C++17対応コンパイラ
+- Docker & Docker Compose（周辺ツール用）
 
 ## ライセンス
 
