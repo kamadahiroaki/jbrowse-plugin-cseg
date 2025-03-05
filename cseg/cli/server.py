@@ -11,6 +11,8 @@ import tempfile
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:9000"}})
 
+# データベースファイルのディレクトリを設定
+DB_DIR = os.environ.get('CSEG_DB_DIR', '/data/db')
 
 def create_image_from_db(db_file, region_ref, region_start, region_end, canvas_width=1600, sample_height=5):
     """データベースからデータを抽出して画像を生成する"""
@@ -75,7 +77,11 @@ def serve_image():
         return 'Missing required parameters', 400
     
     # データベースファイルのパスを構築
-    db_file = f"{cseg}.db"
+    db_file = os.path.join(DB_DIR, f"{cseg}.db")
+    
+    # データベースディレクトリの存在確認
+    if not os.path.exists(DB_DIR):
+        return f'Database directory {DB_DIR} not found', 404
     
     # データベースファイルの存在確認
     if not os.path.exists(db_file):
@@ -111,7 +117,10 @@ def serve_image():
         return str(e), 500
 
 def main():
-    app.run(host='localhost', port=5000)
+    # データベースディレクトリが存在しない場合は作成
+    os.makedirs(DB_DIR, exist_ok=True)
+    # 0.0.0.0でリッスンしてコンテナ外からのアクセスを許可
+    app.run(host='0.0.0.0', port=5000)
 
 if __name__ == '__main__':
     main()

@@ -24,15 +24,25 @@ RUN pip install --upgrade pip \
     && pip install pybind11 \
     && python -c "import pybind11; print('pybind11 include path:', pybind11.get_include())"
 
-# Install other dependencies and build the package
+# Install other dependencies and build the package with verbose output
 RUN pip install flask-cors pillow numpy matplotlib tqdm \
-    && CFLAGS="-I$(python -c 'import pybind11; print(pybind11.get_include())')" pip install -e . \
-    && python -c "from cseg.lib import cseg_renderer; print('cseg_renderer successfully imported')"
+    && CFLAGS="-I$(python -c 'import pybind11; print(pybind11.get_include())')" \
+       VERBOSE=1 pip install -v -e . \
+    && python -c "from cseg.lib import cseg_renderer; print('cseg_renderer successfully imported')" \
+    && python -c "from cseg.bin import vcf2cseg_cpp; print('vcf2cseg_cpp successfully imported')"
 
-# Test if commands are available
+# List all installed files
+RUN find /opt/venv/lib/python3.10/site-packages/cseg -type f
+
+# Create data directories
+RUN cseg-init
+
+# Test if commands are available and verify their functionality
 RUN which vcf2cseg && \
     which cseg-create-db && \
-    which cseg-server
+    which cseg-server && \
+    ls -l /opt/venv/lib/python3.10/site-packages/cseg/lib/cseg_renderer*.so && \
+    ls -l /opt/venv/lib/python3.10/site-packages/cseg/bin/vcf2cseg_cpp*.so
 
 # Expose port for cseg-server
 EXPOSE 5000

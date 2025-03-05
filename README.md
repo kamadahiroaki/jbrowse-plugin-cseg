@@ -72,13 +72,28 @@ docker-compose logs -f
 
 ### 3. データの配置
 
-データファイルは`./data`ディレクトリに配置することを推奨します：
+データファイルは`./data`ディレクトリに配置します：
 
 ```
 ./data/
   ├── vcf/      # 入力VCFファイル
   ├── cseg/     # 変換後のCSEGファイル
-  └── db/       # 作成したデータベースファイル
+  └── db/       # データベースファイル（cseg-serverが参照）
+```
+
+これらのディレクトリは自動的に作成されます。手動で作成する必要はありません。
+
+注意：cseg-serverは`./data/db`ディレクトリからデータベースファイルを探します。
+データベースファイルは必ずこのディレクトリに配置してください。
+
+例：
+```bash
+# データベース作成（出力を./data/dbに指定）
+docker-compose run --rm create-db input.cseg ./data/db/output.db
+
+# JBrowseでの参照
+# URLパラメータのcsegには、.dbを除いたファイル名を指定
+http://localhost:8999/?cseg=output
 ```
 
 ## 開発環境

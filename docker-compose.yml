@@ -9,6 +9,7 @@ services:
       - ./data:/data  # データ用のボリューム
     environment:
       - FLASK_ENV=development
+      - CSEG_DB_DIR=/data/db  # データベースディレクトリの設定
     command: cseg-server
 
   # 追加のサービス定義（必要に応じて使用）
