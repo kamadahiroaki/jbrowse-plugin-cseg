@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, request, send_file
+from flask_cors import CORS
 from PIL import Image
 import io
 import sqlite3
@@ -8,6 +9,8 @@ import os
 import tempfile
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://localhost:9000"}})
+
 
 def create_image_from_db(db_file, region_ref, region_start, region_end, canvas_width=1600, sample_height=5):
     """データベースからデータを抽出して画像を生成する"""
@@ -108,7 +111,7 @@ def serve_image():
         return str(e), 500
 
 def main():
-    app.run(host='localhost', port=5002)
+    app.run(host='localhost', port=5000)
 
 if __name__ == '__main__':
     main()
