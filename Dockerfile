@@ -18,6 +18,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip \
     && pip install pybind11 \
+    && pip install flask-cors pillow numpy matplotlib tqdm \
     && pip install -e .
 
 # Expose port for cseg-server
