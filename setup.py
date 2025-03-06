@@ -2,12 +2,15 @@ from setuptools import setup, find_packages, Extension
 import os
 import platform
 import sys
+import sysconfig
+import pybind11
 
 # コンパイラオプションを設定
 extra_compile_args = [
     '-std=c++17',     # 最新のC++機能を使用
     '-O3',            # 最高レベルの最適化
-    '-march=native',  # CPUアーキテクチャに最適化
+    '-march=x86-64',  # 基本的なx86-64アーキテクチャ向けに最適化
+    '-mtune=generic', # 一般的なプロセッサ向けに最適化
     '-ffast-math',    # 浮動小数点演算の最適化
     '-flto',          # リンク時最適化
     '-funroll-loops', # ループ展開
@@ -23,11 +26,22 @@ extra_link_args = ['-flto']  # リンク時最適化
 if platform.system() != "Darwin":
     extra_link_args.append('-fopenmp')
 
+# Python.hのインクルードパスを取得
+python_include = sysconfig.get_path('include')
+print(f"Python include path: {python_include}")
+
+# pybind11のインクルードパスを取得
+pybind11_include = pybind11.get_include()
+print(f"pybind11 include path: {pybind11_include}")
+
+include_dirs = [python_include, pybind11_include]
+print(f"Using include directories: {include_dirs}")
+
 # C++拡張モジュールの設定
 cseg_renderer = Extension(
-    'cseg.lib.cseg_renderer',
+    'cseg.lib.cseg_renderer',  # フルパスで指定
     sources=['cseg/cpp/cseg_renderer.cpp'],
-    include_dirs=[],  # pybind11のインクルードパスは後で自動追加
+    include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     language='c++',
@@ -35,37 +49,15 @@ cseg_renderer = Extension(
 
 # vcf2csegのビルド設定
 vcf2cseg_ext = Extension(
-    'cseg.bin.vcf2cseg_cpp',
+    'cseg.bin.vcf2cseg_cpp',  # フルパスで指定
     sources=['cseg/cpp/vcf2cseg.cpp'],
-    include_dirs=[],  # pybind11のインクルードパスは後で自動追加
+    include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     language='c++',
 )
 
-def get_pybind11_include():
-    try:
-        import pybind11
-        return pybind11.get_include()
-    except ImportError:
-        return None
-
-# pybind11のインクルードパスを追加
-pybind11_include = get_pybind11_include()
-if pybind11_include:
-    cseg_renderer.include_dirs.append(pybind11_include)
-    vcf2cseg_ext.include_dirs.append(pybind11_include)
-
-# パッケージデータファイルの設定
-package_data = {
-    'cseg': [
-        'cpp/*.cpp',
-        'cpp/*.h',
-        'lib/*.so',
-        'bin/*.so'
-    ]
-}
-
+print("Setting up package...")
 setup(
     name='jbrowse-plugin-cseg',
     version='0.1.0',
@@ -82,7 +74,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'vcf2cseg=cseg.bin.vcf2cseg:main',
+            'vcf2cseg=cseg.bin.vcf2cseg_cpp:main',  # C++モジュールのmain関数を直接使用
             'cseg-server=cseg.cli.server:main',
             'cseg-create-db=cseg.cli.create_db:main',
             'cseg-init=cseg.cli.init:main',
@@ -90,5 +82,10 @@ setup(
     },
     python_requires='>=3.7',
     include_package_data=True,
-    package_data=package_data,
+    package_data={
+        'cseg': [
+            'lib/*.so',
+            'bin/*.so',
+        ],
+    },
 )

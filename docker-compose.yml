@@ -16,7 +16,6 @@ services:
   vcf2cseg:
     build: .
     volumes:
-      - .:/app
       - ./data:/data
     command: vcf2cseg
     profiles: ["tools"]  # docker-compose --profile tools up vcf2cseg で実行
@@ -24,7 +23,6 @@ services:
   create-db:
     build: .
     volumes:
-      - .:/app
       - ./data:/data
     command: cseg-create-db
     profiles: ["tools"]  # docker-compose --profile tools up create-db で実行

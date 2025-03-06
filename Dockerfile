@@ -1,12 +1,27 @@
-FROM python:3.10-slim
+FROM debian:bookworm-slim
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    g++ \
-    sqlite3 \
-    libomp-dev \
-    python3-dev \
+# Install Python and system dependencies with retry logic
+RUN apt-get update && \
+    for i in $(seq 1 5); do \
+        apt-get install -y \
+            python3.11 \
+            python3.11-dev \
+            python3.11-venv \
+            build-essential \
+            g++ \
+            sqlite3 \
+            libomp-dev \
+        && break || { \
+            if [ $i -lt 5 ]; then \
+                echo "Attempt $i failed! Retrying in 5 seconds..."; \
+                sleep 5; \
+                apt-get update; \
+            else \
+                echo "Failed after 5 attempts!"; \
+                exit 1; \
+            fi \
+        } \
+    done \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -16,30 +31,34 @@ WORKDIR /app
 COPY . .
 
 # Install Python dependencies and build the package
-RUN python -m venv /opt/venv
+RUN python3.11 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install pybind11 first and verify its installation
+# Install pybind11 first
 RUN pip install --upgrade pip \
     && pip install pybind11 \
     && python -c "import pybind11; print('pybind11 include path:', pybind11.get_include())"
 
-# Install other dependencies and build the package with verbose output
+# Install the package and build C++ extensions
 RUN pip install flask-cors pillow numpy matplotlib tqdm \
-    && CFLAGS="-I$(python -c 'import pybind11; print(pybind11.get_include())')" \
-       VERBOSE=1 pip install -e . \
-    && python -c "import cseg.lib.cseg_renderer; print('cseg_renderer successfully imported')" \
-    && python -c "import cseg.bin.vcf2cseg_cpp; print('vcf2cseg_cpp successfully imported')"
+    && echo "Building and installing package..." \
+    && CFLAGS="-v" pip install . \
+    && echo "Build directory contents:" \
+    && ls -R build \
+    && echo "Site-packages contents:" \
+    && ls -R /opt/venv/lib/python3.11/site-packages/cseg \
+    && echo "Cleaning up source directory..." \
+    && cd / \
+    && rm -rf /app/* \
+    && echo "Verifying installation:" \
+    && python -c "from cseg.lib import cseg_renderer; print('cseg_renderer imported successfully')" \
+    && python -c "from cseg.bin import vcf2cseg_cpp; print('vcf2cseg_cpp imported successfully')"
 
 # Create data directories
 RUN cseg-init
 
-# Test if commands are available and verify their functionality
-RUN which vcf2cseg && \
-    which cseg-create-db && \
-    which cseg-server && \
-    ls -l /opt/venv/lib/python3.10/site-packages/cseg/lib/cseg_renderer*.so && \
-    ls -l /opt/venv/lib/python3.10/site-packages/cseg/bin/vcf2cseg_cpp*.so
+# Set working directory to a clean location
+WORKDIR /srv
 
 # Expose port for cseg-server
 EXPOSE 5000
