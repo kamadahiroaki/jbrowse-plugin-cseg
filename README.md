@@ -1,6 +1,6 @@
-# JBrowse CSEG Plugin
+# CSEG Plugin for JBrowse 2
 
-JBrowse 2プラグインとPythonバックエンドを含むCSEGビジュアライゼーションツール。
+JBrowse 2のプラグインとして、VCFファイルから生成されたCSEGファイルを表示します。
 
 ## インストール方法
 
@@ -12,7 +12,7 @@ sudo apt-get install -y nodejs
 sudo npm install -g yarn
 ```
 
-### 1. インストール
+### 1. プラグインのインストール
 
 ```bash
 # リポジトリのクローン
@@ -38,70 +38,160 @@ VCFファイルの変換やデータベース作成などの周辺ツールはDo
 ```bash
 # Dockerイメージのビルド
 docker-compose build
-
-# cseg-serverの起動（バックグラウンド実行）
-docker-compose up -d
 ```
 
-## 使用方法
+## データディレクトリ構造
 
-### 1. CSEGデータベースの作成
+CSEGプラグインは以下のディレクトリ構造でデータを管理します：
 
-VCFファイルからCSEGデータベースを作成：
+```
+/data/
+├── vcf/    # VCFファイルの保存場所
+├── cseg/   # CSEGファイルの保存場所
+└── db/     # データベースファイルの保存場所
+```
+
+これらのディレクトリは自動的に作成されます。デフォルトのデータルートディレクトリは`/data`ですが、環境変数`CSEG_DATA_ROOT`で変更できます。
+
+## 基本的な使い方
+
+### 1. データディレクトリの初期化
 
 ```bash
-# VCFファイルの変換
-docker-compose run --rm vcf2cseg [入力VCFファイル] [出力CSEGファイル]
+# デフォルトの場所（/data/）に初期化
+docker-compose run --rm cseg-tools cseg-init
 
-# データベースの作成
-docker-compose run --rm create-db [入力CSEGファイル] [出力DBファイル]
+# カスタムデータディレクトリの指定
+docker-compose run --rm cseg-tools cseg-init --data-root /path/to/data
 ```
 
-### 2. サーバーの操作
+### 2. VCFファイルからCSEGファイルの生成
 
 ```bash
-# サーバーの起動
-docker-compose up -d
+# ファイルからの変換
+docker-compose run --rm vcf2cseg input.vcf
 
-# サーバーの停止
-docker-compose down
+# 標準入力からの変換
+cat input.vcf | docker-compose run --rm vcf2cseg
 
-# ログの確認
-docker-compose logs -f
+# 出力ファイルの指定
+docker-compose run --rm vcf2cseg input.vcf -o output.cseg
+
+# カスタムデータディレクトリの使用
+docker-compose run --rm vcf2cseg input.vcf --data-root /path/to/data
 ```
 
-### 3. データの配置
+生成されたCSEGファイルは、デフォルトで`/data/cseg/`ディレクトリに保存されます。
 
-データファイルは`./data`ディレクトリに配置します：
+### 3. データベースの作成
 
-```
-./data/
-  ├── vcf/      # 入力VCFファイル
-  ├── cseg/     # 変換後のCSEGファイル
-  └── db/       # データベースファイル（cseg-serverが参照）
-```
-
-これらのディレクトリは自動的に作成されます。手動で作成する必要はありません。
-
-注意：cseg-serverは`./data/db`ディレクトリからデータベースファイルを探します。
-データベースファイルは必ずこのディレクトリに配置してください。
-
-例：
 ```bash
-# データベース作成（出力を./data/dbに指定）
-docker-compose run --rm create-db input.cseg ./data/db/output.db
+# デフォルトのデータベースファイル（/data/db/cseg.db）を作成
+docker-compose run --rm create-db /data/cseg/input.cseg
 
-# JBrowseでの参照
-# URLパラメータのcsegには、.dbを除いたファイル名を指定
-http://localhost:8999/?cseg=output
+# カスタムデータベースファイルの指定
+docker-compose run --rm create-db /data/cseg/input.cseg --db /path/to/output.db
+
+# カスタムデータディレクトリの使用
+docker-compose run --rm create-db /data/cseg/input.cseg --data-root /path/to/data
 ```
 
-## 開発環境
+### 4. Webサーバーの起動
 
-- Python 3.7以上
-- Node.js
-- C++17対応コンパイラ
-- Docker & Docker Compose（周辺ツール用）
+```bash
+# サーバーの起動（デフォルトポート：5000）
+docker-compose up
+```
+
+サーバーは`http://localhost:5000`でアクセス可能です。
+通常はJBrowseプラグインを通してアクセスします。
+
+## JBrowseでの設定
+
+### 1. プラグインの追加
+
+既存のJBrowseインスタンスにプラグインを追加する場合：
+
+```bash
+jbrowse add-plugin @kamadahiroaki/jbrowse-plugin-cseg
+```
+
+または、`jbrowse.conf.json`に直接追加：
+
+```json
+{
+  "plugins": [
+    {
+      "name": "@kamadahiroaki/jbrowse-plugin-cseg",
+      "url": "https://unpkg.com/@kamadahiroaki/jbrowse-plugin-cseg/dist/jbrowse-plugin-cseg.umd.production.min.js"
+    }
+  ]
+}
+```
+
+### 2. トラックの設定
+
+CSEGトラックを表示するには、以下の設定を`tracks.conf`に追加します：
+
+```json
+{
+  "type": "CSEGTrack",
+  "name": "CSEG Data",
+  "trackId": "cseg_track",
+  "adapter": {
+    "type": "CSEGAdapter",
+    "csegEndpoint": "http://localhost:5000"
+  }
+}
+```
+
+## 環境変数
+
+以下の環境変数で設定をカスタマイズできます：
+
+- `CSEG_DATA_ROOT`: データディレクトリのルート（デフォルト：`/data`）
+- `CSEG_VCF_DIR`: VCFファイルのディレクトリ名（デフォルト：`vcf`）
+- `CSEG_CSEG_DIR`: CSEGファイルのディレクトリ名（デフォルト：`cseg`）
+- `CSEG_DB_DIR`: データベースファイルのディレクトリ名（デフォルト：`db`）
+- `CSEG_DB_NAME`: データベースファイル名（デフォルト：`cseg.db`）
+
+## 開発環境のセットアップ
+
+### 必要な環境
+
+- Node.js 18以上
+- Python 3.11以上
+- Docker & Docker Compose
+- C++コンパイラ（gcc/g++ 12以上）
+
+### 開発サーバーの起動
+
+```bash
+# フロントエンド開発サーバー
+yarn start
+
+# バックエンドサーバー
+docker-compose up
+```
+
+## トラブルシューティング
+
+### データディレクトリのパーミッション
+
+Dockerコンテナ内でデータディレクトリにアクセスできない場合は、以下のコマンドでパーミッションを設定してください：
+
+```bash
+sudo chown -R 1000:1000 /data
+```
+
+### ポート5000が使用中の場合
+
+`docker-compose.yml`の`ports`セクションを編集して、別のポートを使用してください：
+
+```yaml
+ports:
+  - "8000:5000"  # ホストの8000番ポートをコンテナの5000番ポートにマッピング
+```
 
 ## ライセンス
 

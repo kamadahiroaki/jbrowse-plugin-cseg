@@ -1,8 +1,17 @@
-data/
-*.png
-*.db
-*.cseg
+*0.png
 
+# Data directories
+/data/
+data/
+*.vcf
+*.cseg
+*.db
+
+# Development files
+.vscode/
+.idea/
+*.swp
+.DS_Store
 
 # Logs
 logs
@@ -128,14 +137,13 @@ dist
 cypress/videos
 cypress/screenshots
 
-# Ignore code editor
-.vscode
-
 # Python
+*.pyc
 __pycache__/
-*.py[cod]
-*$py.class
 *.so
+*.egg-info/
 dist/
 build/
-*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
