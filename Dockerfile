@@ -24,6 +24,14 @@ RUN apt-get update && \
     done \
     && rm -rf /var/lib/apt/lists/*
 
+# Set user ID and group ID
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# Create group and user
+RUN groupadd -g $GROUP_ID cseg && \
+    useradd -u $USER_ID -g $GROUP_ID -m cseg
+
 # Set working directory
 WORKDIR /app
 
@@ -57,8 +65,14 @@ RUN pip install flask-cors pillow numpy matplotlib tqdm \
 # Create data directories
 RUN cseg-init
 
+# Create data directory and set ownership
+RUN mkdir -p /data/cseg && chown -R cseg:cseg /data/cseg
+
 # Set working directory to a clean location
 WORKDIR /srv
+
+# Switch to user
+USER cseg
 
 # Expose port for cseg-server
 EXPOSE 5000

@@ -9,11 +9,15 @@ def vcf_to_cseg(vcf_file: pathlib.Path, cseg_file: pathlib.Path = None):
     """VCFファイルをCSEGファイルに変換する"""
     if cseg_file is None:
         # 出力ファイル名を自動生成
-        cseg_file = config.cseg_path / f"{vcf_file.stem}.cseg"
+        if vcf_file.name == '<stdin>':
+            cseg_file = config.cseg_path / 'stdin.cseg'
+        else:
+            cseg_file = config.cseg_path / f"{vcf_file.stem}.cseg"
 
     # 入力がパイプからの場合は一時ファイルに保存
     if vcf_file.name == '<stdin>':
         temp_vcf = config.vcf_path / 'temp.vcf'
+        temp_vcf.parent.mkdir(parents=True, exist_ok=True)
         with open(temp_vcf, 'wb') as f:
             f.write(sys.stdin.buffer.read())
         vcf_file = temp_vcf
@@ -28,6 +32,10 @@ def vcf_to_cseg(vcf_file: pathlib.Path, cseg_file: pathlib.Path = None):
     # 一時ファイルを削除
     if vcf_file.name == 'temp.vcf':
         vcf_file.unlink()
+
+    # CSEGファイルの内容を標準出力に出力
+    with open(cseg_file, 'r') as f:
+        sys.stdout.write(f.read())
 
     return cseg_file
 
