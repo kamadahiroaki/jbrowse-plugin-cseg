@@ -42,8 +42,6 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
     create_tables(db_path)
 
     # CSEGファイルの処理
-    # Note: ここでは簡略化していますが、実際にはCSEGファイルのフォーマットに
-    # 合わせて適切な処理を行う必要があります
     from ..bin.vcf2cseg_cpp import process_cseg_file
     process_cseg_file(str(cseg_file), str(db_path))
 
@@ -52,14 +50,18 @@ def main():
     parser.add_argument('cseg_file', type=pathlib.Path,
                       help='Input CSEG file')
     parser.add_argument('--db', type=pathlib.Path,
-                      help='Output database file (default: config.db_file)')
+                      help='Output database file (default: based on input filename)')
     parser.add_argument('--data-root', help='Root directory for CSEG data (default: /data)')
     args = parser.parse_args()
 
     if args.data_root:
         os.environ['CSEG_DATA_ROOT'] = args.data_root
 
-    db_path = args.db if args.db else config.db_file
+    # データベースファイル名を入力ファイル名から自動生成
+    if args.db:
+        db_path = args.db
+    else:
+        db_path = pathlib.Path('/data') / f"{args.cseg_file.stem}.db"
     
     # 親ディレクトリが存在しない場合は作成
     db_path.parent.mkdir(parents=True, exist_ok=True)

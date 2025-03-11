@@ -1,40 +1,31 @@
-version: '3'
+version: '1.0'
 services:
   cseg-tools:
     build:
       context: .
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
     ports:
       - "5000:5000"
     volumes:
-      - ${HOME}/.local/share/cseg:/data/cseg
+      - ./data:/data
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - CSEG_DB_DIR=/data/cseg
+      - CSEG_DB_DIR=/data
     command: cseg-server
 
   # 追加のサービス定義（必要に応じて使用）
   vcf2cseg:
     build:
       context: .
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
     volumes:
-      - ${HOME}/.local/share/cseg:/data/cseg
+      - ./data:/data
     command: vcf2cseg
     profiles: ["tools"]  # docker-compose --profile tools up vcf2cseg で実行
 
   create-db:
     build:
       context: .
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
     volumes:
-      - ${HOME}/.local/share/cseg:/data/cseg
-    command: cseg-create-db
+      - ./data:/data
+    entrypoint: ["cseg-create-db"]
     profiles: ["tools"]  # docker-compose --profile tools up create-db で実行
