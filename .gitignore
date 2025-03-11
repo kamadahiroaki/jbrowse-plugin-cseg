@@ -2,6 +2,7 @@
 
 # Data directories
 data/*
+!data/.gitkeep
 *.vcf
 *.cseg
 *.db
