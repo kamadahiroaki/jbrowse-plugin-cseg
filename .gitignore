@@ -1,8 +1,7 @@
 *0.png
 
 # Data directories
-/data/
-data/
+data/*
 *.vcf
 *.cseg
 *.db
