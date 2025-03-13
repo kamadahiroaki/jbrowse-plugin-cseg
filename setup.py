@@ -74,10 +74,9 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'vcf2cseg=cseg.bin.vcf2cseg_cpp:main',  # C++モジュールのmain関数を直接使用
+            'vcf2cseg=cseg.bin.vcf2cseg_cpp:main',  
             'cseg-server=cseg.cli.server:main',
             'cseg-create-db=cseg.cli.create_db:main',
-            'cseg-init=cseg.cli.init:main',
         ],
     },
     python_requires='>=3.7',

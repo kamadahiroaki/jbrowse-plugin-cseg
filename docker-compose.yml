@@ -4,13 +4,12 @@ services:
     build:
       context: .
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./data:/data
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - CSEG_DB_DIR=/data
     command: cseg-server
 
   # 追加のサービス定義（必要に応じて使用）
@@ -19,7 +18,7 @@ services:
       context: .
     volumes:
       - ./data:/data
-    command: vcf2cseg
+    entrypoint: ["vcf2cseg"]
     profiles: ["tools"]  # docker-compose --profile tools up vcf2cseg で実行
 
   create-db:

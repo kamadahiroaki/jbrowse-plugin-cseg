@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import os
+import sys
 import argparse
 import pathlib
 import sqlite3
-from tqdm import tqdm
-from ..config import config
 
 def create_tables(db_path: pathlib.Path):
     """データベースのテーブルを作成する"""
@@ -41,33 +39,62 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
     # データベースの初期化
     create_tables(db_path)
 
+    # CSEGファイルの内容を読み込む
+    with open(cseg_file, 'r') as f:
+        cseg_content = f.read()
+
     # CSEGファイルの処理
-    from ..bin.vcf2cseg_cpp import process_cseg_file
-    process_cseg_file(str(cseg_file), str(db_path))
+    from ..bin.vcf2cseg_cpp import convert_vcf_to_cseg
+    cseg_data = convert_vcf_to_cseg(cseg_content)
+
+    # データベースに保存
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    # サンプル名のリストを取得（最初の行から）
+    header = cseg_data.split('\n')[0]
+    sample_names = header.split('\t')[2:]  # contigとpos以外の列はサンプル名
+    
+    # サンプルをデータベースに登録
+    for i, name in enumerate(sample_names, start=1):
+        c.execute('INSERT OR IGNORE INTO samples (id, name) VALUES (?, ?)', (i, name))
+
+    # バリアントデータを登録
+    for line in cseg_data.split('\n')[1:]:  # ヘッダー以外の行を処理
+        if not line.strip():  # 空行をスキップ
+            continue
+            
+        fields = line.split('\t')
+        chrom = fields[0]
+        pos = int(fields[1])
+        values = fields[2:]  # サンプルごとの値
+
+        for sample_id, value in enumerate(values, start=1):
+            c.execute('''
+                INSERT INTO variants (chrom, pos, sample_id, value)
+                VALUES (?, ?, ?, ?)
+            ''', (chrom, pos, sample_id, float(value)))
+
+    conn.commit()
+    conn.close()
 
 def main():
     parser = argparse.ArgumentParser(description='Create CSEG database from CSEG file')
     parser.add_argument('cseg_file', type=pathlib.Path,
                       help='Input CSEG file')
-    parser.add_argument('--db', type=pathlib.Path,
-                      help='Output database file (default: based on input filename)')
-    parser.add_argument('--data-root', help='Root directory for CSEG data (default: /data)')
     args = parser.parse_args()
 
-    if args.data_root:
-        os.environ['CSEG_DATA_ROOT'] = args.data_root
+    # 入力ファイルが/data内にない場合は、/data内のパスに変換
+    if not str(args.cseg_file).startswith('/data/'):
+        cseg_file = pathlib.Path('/data') / args.cseg_file.name
+    else:
+        cseg_file = args.cseg_file
 
     # データベースファイル名を入力ファイル名から自動生成
-    if args.db:
-        db_path = args.db
-    else:
-        db_path = pathlib.Path('/data') / f"{args.cseg_file.stem}.db"
-    
-    # 親ディレクトリが存在しない場合は作成
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+    db_path = pathlib.Path('/data') / f"{cseg_file.stem}.db"
 
     try:
-        process_cseg_file(args.cseg_file, db_path)
+        process_cseg_file(cseg_file, db_path)
         print(f"\nDatabase created successfully at: {db_path}")
     except Exception as e:
         print(f"Error: {e}")
