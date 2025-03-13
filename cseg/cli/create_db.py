@@ -43,16 +43,12 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
     with open(cseg_file, 'r') as f:
         cseg_content = f.read()
 
-    # CSEGファイルの処理
-    from ..bin.vcf2cseg_cpp import convert_vcf_to_cseg
-    cseg_data = convert_vcf_to_cseg(cseg_content)
-
     # データベースに保存
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
     # サンプル名のリストを取得（最初の行から）
-    header = cseg_data.split('\n')[0]
+    header = cseg_content.split('\n')[0]
     sample_names = header.split('\t')[2:]  # contigとpos以外の列はサンプル名
     
     # サンプルをデータベースに登録
@@ -60,7 +56,7 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
         c.execute('INSERT OR IGNORE INTO samples (id, name) VALUES (?, ?)', (i, name))
 
     # バリアントデータを登録
-    for line in cseg_data.split('\n')[1:]:  # ヘッダー以外の行を処理
+    for line in cseg_content.split('\n')[1:]:  # ヘッダー以外の行を処理
         if not line.strip():  # 空行をスキップ
             continue
             
