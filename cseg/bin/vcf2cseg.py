@@ -1,41 +1,24 @@
 #!/usr/bin/env python3
 import sys
-import os
 import argparse
 import pathlib
-from ..config import config
 
-def vcf_to_cseg(vcf_file: pathlib.Path, cseg_file: pathlib.Path = None):
-    """VCFファイルをCSEGファイルに変換する"""
+def vcf_to_cseg(vcf_content: str, cseg_file: pathlib.Path = None, input_name: str = 'stdin'):
+    """VCFデータをCSEGファイルに変換する"""
+    # 出力ファイル名を自動生成（/data直下に配置）
     if cseg_file is None:
-        # 出力ファイル名を自動生成
-        if vcf_file.name == '<stdin>':
-            cseg_file = config.cseg_path / 'stdin.cseg'
-        else:
-            cseg_file = config.cseg_path / f"{vcf_file.stem}.cseg"
+        cseg_file = pathlib.Path('/data') / f"{input_name}.cseg"
 
-    # 入力がパイプからの場合は一時ファイルに保存
-    if vcf_file.name == '<stdin>':
-        temp_vcf = config.vcf_path / 'temp.vcf'
-        temp_vcf.parent.mkdir(parents=True, exist_ok=True)
-        with open(temp_vcf, 'wb') as f:
-            f.write(sys.stdin.buffer.read())
-        vcf_file = temp_vcf
-
-    # 親ディレクトリが存在しない場合は作成
-    cseg_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # C++の関数を呼び出してCSEGファイルを生成
+    # C++の関数を呼び出してCSEGデータを生成
     from .vcf2cseg_cpp import convert_vcf_to_cseg
-    convert_vcf_to_cseg(str(vcf_file), str(cseg_file))
+    cseg_data = convert_vcf_to_cseg(vcf_content)
 
-    # 一時ファイルを削除
-    if vcf_file.name == 'temp.vcf':
-        vcf_file.unlink()
+    # CSEGファイルに保存
+    with open(cseg_file, 'w') as f:
+        f.write(cseg_data)
 
-    # CSEGファイルの内容を標準出力に出力
-    with open(cseg_file, 'r') as f:
-        sys.stdout.write(f.read())
+    # CSEGデータを標準出力に出力
+    sys.stdout.write(cseg_data)
 
     return cseg_file
 
@@ -44,15 +27,42 @@ def main():
     parser.add_argument('vcf_file', nargs='?', type=pathlib.Path, default=pathlib.Path('<stdin>'),
                       help='Input VCF file (default: stdin)')
     parser.add_argument('-o', '--output', type=pathlib.Path,
-                      help='Output CSEG file (default: <input_name>.cseg in CSEG directory)')
-    parser.add_argument('--data-root', help='Root directory for CSEG data (default: /data)')
+                      help='Output CSEG file (default: <input_name>.cseg)')
     args = parser.parse_args()
 
-    if args.data_root:
-        os.environ['CSEG_DATA_ROOT'] = args.data_root
+    # 入力ソースを決定
+    if args.vcf_file.name != '<stdin>':
+        # ファイルが/data内にない場合は、/data内のパスに変換
+        if not str(args.vcf_file).startswith('/data/'):
+            vcf_file = pathlib.Path('/data') / args.vcf_file.name
+        else:
+            vcf_file = args.vcf_file
+
+        # ファイルから読み込み
+        try:
+            with open(vcf_file, 'r') as f:
+                vcf_content = f.read()
+            input_name = vcf_file.stem
+        except FileNotFoundError:
+            print(f"Error: Input file not found: {vcf_file}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # 標準入力から読み込み
+        print("Reading from standard input...", file=sys.stderr)
+        vcf_content = sys.stdin.read()
+        input_name = 'stdin'
+
+    # 出力ファイルが指定されている場合は、/data内のパスに変換
+    if args.output:
+        if not str(args.output).startswith('/data/'):
+            cseg_file = pathlib.Path('/data') / args.output.name
+        else:
+            cseg_file = args.output
+    else:
+        cseg_file = None
 
     try:
-        cseg_file = vcf_to_cseg(args.vcf_file, args.output)
+        cseg_file = vcf_to_cseg(vcf_content, cseg_file, input_name)
         print(f"Successfully created CSEG file: {cseg_file}", file=sys.stderr)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
