@@ -48,6 +48,9 @@ def main():
             cseg_file = args.output
     else:
         cseg_file = None
+    
+    print(f"Converting {vcf_file} to CSEG format...")
+    print(f"Output CSEG file: {cseg_file}")
 
     try:
         cseg_file = vcf_to_cseg(vcf_file, cseg_file)
