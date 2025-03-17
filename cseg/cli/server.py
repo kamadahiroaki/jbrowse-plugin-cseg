@@ -59,7 +59,8 @@ def create_image_from_db(db_file, region_ref, region_start, region_end, canvas_w
                 values.append(str(result[0]) if result else '0')
             
             # CSEGファイルに行を書き出し
-            temp_cseg.write(f"{chrom}\t{pos}\t{'\t'.join(values)}\n")
+            line = [chrom, pos] + values
+            temp_cseg.write('\t'.join(line) + '\n')
         
         # ファイルをフラッシュして確実にディスクに書き出す
         temp_cseg.flush()
