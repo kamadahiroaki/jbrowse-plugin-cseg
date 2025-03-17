@@ -5,19 +5,25 @@ import pathlib
 
 def vcf_to_cseg(vcf_file: pathlib.Path, cseg_file: pathlib.Path = None):
     """VCFファイルをCSEGファイルに変換する"""
+    print(f"Converting {vcf_file} to CSEG format...", file=sys.stderr)
+
     # 出力ファイル名を自動生成（/data直下に配置）
     if cseg_file is None:
         cseg_file = pathlib.Path('/data') / f"{vcf_file.stem}.cseg"
+    print(f"Output CSEG file: {cseg_file}", file=sys.stderr)
 
     # VCFファイルの内容を読み込む
+    print(f"Reading VCF file...", file=sys.stderr)
     with open(vcf_file, 'r') as f:
         vcf_content = f.read()
 
     # C++の関数を呼び出してCSEGデータを生成
+    print(f"Converting to CSEG format...", file=sys.stderr)
     from .vcf2cseg_cpp import convert_vcf_to_cseg
     cseg_data = convert_vcf_to_cseg(vcf_content)
 
     # CSEGファイルに保存
+    print(f"Saving CSEG file...", file=sys.stderr)
     with open(cseg_file, 'w') as f:
         f.write(cseg_data)
 
@@ -48,9 +54,6 @@ def main():
             cseg_file = args.output
     else:
         cseg_file = None
-    
-    print(f"Converting {vcf_file} to CSEG format...")
-    print(f"Output CSEG file: {cseg_file}")
 
     try:
         cseg_file = vcf_to_cseg(vcf_file, cseg_file)

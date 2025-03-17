@@ -12,33 +12,54 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:9000"}})
 
 # データベースファイルのディレクトリを設定
-DB_DIR = os.environ.get('CSEG_DB_DIR', '/data/db')
+DB_DIR = os.environ.get('CSEG_DB_DIR', '/data')
 
 def create_image_from_db(db_file, region_ref, region_start, region_end, canvas_width=1600, sample_height=5):
     """データベースからデータを抽出して画像を生成する"""
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     
+    # サンプル名を取得
+    c.execute('SELECT id, name FROM samples ORDER BY id')
+    samples = c.fetchall()
+    
     # 一時ファイルを作成
     with tempfile.NamedTemporaryFile(mode='w', suffix='.cseg', delete=True) as temp_cseg:
+        # ヘッダー行を書き出し
+        header = ['chrom', 'pos'] + [name for _, name in samples]
+        temp_cseg.write('\t'.join(header) + '\n')
+        
         # データを取得（インデックスを使用）
         c.execute('''
-            SELECT ref_name, start, end, sample_values 
-            FROM cseg_data 
-            WHERE ref_name = ? 
+            SELECT DISTINCT chrom, start, end
+            FROM variants 
+            WHERE chrom = ? 
             AND NOT (end < ? OR start > ?)
-            ORDER BY start
+            ORDER BY start, end
         ''', (region_ref, region_start, region_end))
+        positions = c.fetchall()
         
-        # 一時CSEGファイルに書き出し
-        for ref_name, start, end, values_blob in c:
-            values = list(values_blob)
+        # 各位置でのサンプルごとの値を取得
+        for chrom, start, end in positions:
+            # 位置の文字列を生成
             if start == end:
                 pos = str(start)
             else:
                 pos = f"{start}-{end}"
-            values_str = '\t'.join(str(x) for x in values)
-            temp_cseg.write(f"{ref_name}\t{pos}\t{values_str}\n")
+            
+            # この位置での全サンプルの値を取得
+            values = []
+            for sample_id, _ in samples:
+                c.execute('''
+                    SELECT value 
+                    FROM variants 
+                    WHERE chrom = ? AND start = ? AND end = ? AND sample_id = ?
+                ''', (chrom, start, end, sample_id))
+                result = c.fetchone()
+                values.append(str(result[0]) if result else '0')
+            
+            # CSEGファイルに行を書き出し
+            temp_cseg.write(f"{chrom}\t{pos}\t{'\t'.join(values)}\n")
         
         # ファイルをフラッシュして確実にディスクに書き出す
         temp_cseg.flush()
@@ -79,10 +100,6 @@ def serve_image():
     # データベースファイルのパスを構築
     db_file = os.path.join(DB_DIR, f"{cseg}.db")
     
-    # データベースディレクトリの存在確認
-    if not os.path.exists(DB_DIR):
-        return f'Database directory {DB_DIR} not found', 404
-    
     # データベースファイルの存在確認
     if not os.path.exists(db_file):
         return f'Database file {db_file} not found', 404
@@ -117,8 +134,6 @@ def serve_image():
         return str(e), 500
 
 def main():
-    # データベースディレクトリが存在しない場合は作成
-    os.makedirs(DB_DIR, exist_ok=True)
     # 0.0.0.0でリッスンしてコンテナ外からのアクセスを許可
     app.run(host='0.0.0.0', port=5000)
 

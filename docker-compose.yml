@@ -4,7 +4,7 @@ services:
     build:
       context: .
     ports:
-      - "5001:5000"
+      - "5000:5000"
     volumes:
       - ./data:/data
     environment:
@@ -19,7 +19,6 @@ services:
     volumes:
       - ./data:/data
     entrypoint: ["vcf2cseg"]
-    profiles: ["tools"]  # docker-compose --profile tools up vcf2cseg で実行
 
   create-db:
     build:
@@ -27,4 +26,3 @@ services:
     volumes:
       - ./data:/data
     entrypoint: ["cseg-create-db"]
-    profiles: ["tools"]  # docker-compose --profile tools up create-db で実行

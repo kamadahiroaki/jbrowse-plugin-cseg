@@ -13,7 +13,8 @@ def create_tables(db_path: pathlib.Path):
     c.execute('''CREATE TABLE IF NOT EXISTS variants (
         id INTEGER PRIMARY KEY,
         chrom TEXT,
-        pos INTEGER,
+        start INTEGER,
+        end INTEGER,
         ref TEXT,
         alt TEXT,
         sample_id INTEGER,
@@ -26,7 +27,7 @@ def create_tables(db_path: pathlib.Path):
     )''')
 
     # インデックスの作成
-    c.execute('CREATE INDEX IF NOT EXISTS idx_variants_pos ON variants(chrom, pos)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_variants_pos ON variants(chrom, start, end)')
     c.execute('CREATE INDEX IF NOT EXISTS idx_variants_sample ON variants(sample_id)')
 
     conn.commit()
@@ -62,14 +63,20 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
             
         fields = line.split('\t')
         chrom = fields[0]
-        pos = int(fields[1])
+        pos_field = fields[1]
         values = fields[2:]  # サンプルごとの値
+
+        # pos_fieldを解析（整数一つまたは整数-整数の形式）
+        if '-' in pos_field:
+            start, end = map(int, pos_field.split('-'))
+        else:
+            start = end = int(pos_field)
 
         for sample_id, value in enumerate(values, start=1):
             c.execute('''
-                INSERT INTO variants (chrom, pos, sample_id, value)
-                VALUES (?, ?, ?, ?)
-            ''', (chrom, pos, sample_id, float(value)))
+                INSERT INTO variants (chrom, start, end, sample_id, value)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (chrom, start, end, sample_id, float(value)))
 
     conn.commit()
     conn.close()
