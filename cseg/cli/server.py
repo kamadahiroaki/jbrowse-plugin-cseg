@@ -19,48 +19,26 @@ def create_image_from_db(db_file, region_ref, region_start, region_end, canvas_w
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     
-    # サンプル名を取得
-    c.execute('SELECT id, name FROM samples ORDER BY id')
-    samples = c.fetchall()
-    
     # 一時ファイルを作成
     with tempfile.NamedTemporaryFile(mode='w', suffix='.cseg', delete=True) as temp_cseg:
-        # ヘッダー行を書き出し
-        header = ['chrom', 'pos'] + [name for _, name in samples]
-        temp_cseg.write('\t'.join(header) + '\n')
-        
         # データを取得（インデックスを使用）
         c.execute('''
-            SELECT DISTINCT chrom, start, end
-            FROM variants 
-            WHERE chrom = ? 
+            SELECT ref_name, start, end, sample_values 
+            FROM cseg_data 
+            WHERE ref_name = ? 
             AND NOT (end < ? OR start > ?)
-            ORDER BY start, end
+            ORDER BY start
         ''', (region_ref, region_start, region_end))
-        positions = c.fetchall()
         
-        # 各位置でのサンプルごとの値を取得
-        for chrom, start, end in positions:
-            # 位置の文字列を生成
+        # 一時CSEGファイルに書き出し
+        for ref_name, start, end, values_blob in c:
+            values = list(values_blob)
             if start == end:
                 pos = str(start)
             else:
                 pos = f"{start}-{end}"
-            
-            # この位置での全サンプルの値を取得
-            values = []
-            for sample_id, _ in samples:
-                c.execute('''
-                    SELECT value 
-                    FROM variants 
-                    WHERE chrom = ? AND start = ? AND end = ? AND sample_id = ?
-                ''', (chrom, start, end, sample_id))
-                result = c.fetchone()
-                values.append(str(result[0]) if result else '0')
-            
-            # CSEGファイルに行を書き出し
-            line = [chrom, pos] + values
-            temp_cseg.write('\t'.join(line) + '\n')
+            values_str = '\t'.join(str(x) for x in values)
+            temp_cseg.write(f"{ref_name}\t{pos}\t{values_str}\n")
         
         # ファイルをフラッシュして確実にディスクに書き出す
         temp_cseg.flush()
