@@ -40,45 +40,44 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
     # データベースの初期化
     create_tables(db_path)
 
-    # CSEGファイルの内容を読み込む
-    with open(cseg_file, 'r') as f:
-        cseg_content = f.read()
-
     # データベースに保存
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    # サンプル名のリストを取得（最初の行から）
-    header = cseg_content.split('\n')[0]
-    sample_names = header.split('\t')[2:]  # contigとpos以外の列はサンプル名
-    
-    # サンプルをデータベースに登録
-    for i, name in enumerate(sample_names, start=1):
-        c.execute('INSERT OR IGNORE INTO samples (id, name) VALUES (?, ?)', (i, name))
+    # CSEGファイルを1行ずつ読み込んで処理
+    with open(cseg_file, 'r') as f:
+        # ヘッダー行を処理
+        header = f.readline().strip()
+        sample_names = header.split('\t')[2:]  # contigとpos以外の列はサンプル名
+        
+        # サンプルをデータベースに登録
+        for i, name in enumerate(sample_names, start=1):
+            c.execute('INSERT OR IGNORE INTO samples (id, name) VALUES (?, ?)', (i, name))
 
-    # バリアントデータを登録
-    for line in cseg_content.split('\n')[1:]:  # ヘッダー以外の行を処理
-        if not line.strip():  # 空行をスキップ
-            continue
-            
-        fields = line.split('\t')
-        chrom = fields[0]
-        pos_field = fields[1]
-        values = fields[2:]  # サンプルごとの値
+        # バリアントデータを登録
+        for line in f:  # ヘッダー以外の行を処理
+            if not line.strip():  # 空行をスキップ
+                continue
+                
+            fields = line.strip().split('\t')
+            chrom = fields[0]
+            pos_field = fields[1]
+            values = fields[2:]  # サンプルごとの値
 
-        # pos_fieldを解析（整数一つまたは整数-整数の形式）
-        if '-' in pos_field:
-            start, end = map(int, pos_field.split('-'))
-        else:
-            start = end = int(pos_field)
+            # pos_fieldを解析（整数一つまたは整数-整数の形式）
+            if '-' in pos_field:
+                start, end = map(int, pos_field.split('-'))
+            else:
+                start = end = int(pos_field)
 
-        for sample_id, value in enumerate(values, start=1):
-            c.execute('''
-                INSERT INTO variants (chrom, start, end, sample_id, value)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (chrom, start, end, sample_id, float(value)))
+            for sample_id, value in enumerate(values, start=1):
+                if value.strip():  # 空の値をスキップ
+                    c.execute('''
+                        INSERT INTO variants (chrom, start, end, sample_id, value)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', (chrom, start, end, sample_id, float(value)))
 
-    conn.commit()
+        conn.commit()
     conn.close()
 
 def main():
