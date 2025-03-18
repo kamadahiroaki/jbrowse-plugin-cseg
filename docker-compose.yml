@@ -4,7 +4,7 @@ services:
     build: .
     command: cseg-server
     ports:
-      - "5001:5000"
+      - "5000:5000"
     volumes:
       - ./data:/data
     environment:
