@@ -139,8 +139,20 @@ py::array_t<uint8_t> create_cseg_image(
             int y1 = sample_idx * sample_height;
             int y2 = y1 + sample_height;
 
-            // この値の優先度（1が最優先）
-            uint8_t current_priority = value > 0 ? value : 5;
+            // この値の優先度（1=2が最優先、3=4が次、0が最低）
+            uint8_t current_priority;
+            switch (value) {
+                case 1:
+                case 2:
+                    current_priority = 1;  // 最高優先度
+                    break;
+                case 3:
+                case 4:
+                    current_priority = 2;  // 中優先度
+                    break;
+                default:
+                    current_priority = 5;  // 最低優先度
+            }
 
             // この領域を処理
             for (int y = y1; y < y2; ++y) {

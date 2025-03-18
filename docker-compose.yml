@@ -1,28 +1,24 @@
-version: '1.0'
+version: '3'
 services:
   cseg-tools:
-    build:
-      context: .
+    build: .
+    command: cseg-server
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./data:/data
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-    command: cseg-server
+      - CSEG_DB_DIR=/data
 
   # 追加のサービス定義（必要に応じて使用）
   vcf2cseg:
-    build:
-      context: .
+    build: .
+    command: vcf2cseg
     volumes:
       - ./data:/data
-    entrypoint: ["vcf2cseg"]
 
   create-db:
-    build:
-      context: .
+    build: .
+    command: cseg-create-db
     volumes:
       - ./data:/data
-    entrypoint: ["cseg-create-db"]

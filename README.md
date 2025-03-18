@@ -1,4 +1,6 @@
-# CSEG Plugin for JBrowse 2
+![Integration](https://github.com/GMOD/jbrowse-plugin-template/workflows/Integration/badge.svg?branch=main)
+
+# cseg
 
 JBrowse 2のプラグインとして、VCFファイルから生成されたCSEGファイルを表示します。
 
