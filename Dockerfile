@@ -1,3 +1,7 @@
+# ビルド時の引数としてUID/GIDを受け取れるように設定
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
 FROM debian:bookworm-slim
 
 # Install Python and system dependencies with retry logic
@@ -25,8 +29,8 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Create cseg user
-RUN groupadd -g 1000 cseg && \
-    useradd -u 1000 -g 1000 -m cseg
+RUN groupadd -g ${GROUP_ID} cseg && \
+    useradd -u ${USER_ID} -g ${GROUP_ID} -m cseg
 
 # Set working directory
 WORKDIR /app

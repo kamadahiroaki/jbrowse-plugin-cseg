@@ -1,8 +1,13 @@
 version: '1'
 services:
   cseg-tools:
-    build: .
+    build:
+      context: .
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
     command: cseg-server
+    user: "${UID:-1000}:${GID:-1000}"
     ports:
       - "5000:5000"
     volumes:
@@ -12,13 +17,23 @@ services:
 
   # 追加のサービス定義（必要に応じて使用）
   vcf2cseg:
-    build: .
+    build:
+      context: .
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
     command: vcf2cseg
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
 
   create-db:
-    build: .
+    build:
+      context: .
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
     command: cseg-create-db
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
