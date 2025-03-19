@@ -4,8 +4,8 @@ services:
     build:
       context: .
       args:
-        - USER_ID=${UID:-1000}
-        - GROUP_ID=${GID:-1000}
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
     command: cseg-server
     user: "${UID:-1000}:${GID:-1000}"
     ports:
@@ -20,8 +20,8 @@ services:
     build:
       context: .
       args:
-        - USER_ID=${UID:-1000}
-        - GROUP_ID=${GID:-1000}
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
     command: vcf2cseg
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
@@ -31,8 +31,8 @@ services:
     build:
       context: .
       args:
-        - USER_ID=${UID:-1000}
-        - GROUP_ID=${GID:-1000}
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
     command: cseg-create-db
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
