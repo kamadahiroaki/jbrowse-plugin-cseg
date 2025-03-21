@@ -22,7 +22,7 @@ services:
       args:
         USER_ID: ${UID:-1000}
         GROUP_ID: ${GID:-1000}
-    command: vcf2cseg
+    entrypoint: ["vcf2cseg"]
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
@@ -33,7 +33,7 @@ services:
       args:
         USER_ID: ${UID:-1000}
         GROUP_ID: ${GID:-1000}
-    command: cseg-create-db
+    entrypoint: ["cseg-create-db"]
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data

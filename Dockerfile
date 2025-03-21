@@ -4,6 +4,11 @@ ARG GROUP_ID=1000
 
 FROM debian:bookworm-slim
 
+ARG USER_ID
+ARG GROUP_ID
+ENV USER_ID=${USER_ID}
+ENV GROUP_ID=${GROUP_ID}
+
 # Install Python and system dependencies with retry logic
 RUN apt-get update && \
     for i in $(seq 1 5); do \
