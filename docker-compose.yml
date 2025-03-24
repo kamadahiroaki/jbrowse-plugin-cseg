@@ -22,10 +22,11 @@ services:
       args:
         USER_ID: ${UID:-1000}
         GROUP_ID: ${GID:-1000}
-    entrypoint: ["vcf2cseg"]
+    entrypoint: ["python3", "-m", "cseg.bin.vcf2cseg"]
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
+    working_dir: /data
 
   create-db:
     build:
@@ -33,7 +34,8 @@ services:
       args:
         USER_ID: ${UID:-1000}
         GROUP_ID: ${GID:-1000}
-    entrypoint: ["cseg-create-db"]
+    entrypoint: ["python3", "-m", "cseg.cli.create_db"]
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
+    working_dir: /data

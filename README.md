@@ -61,34 +61,51 @@ echo "GID=$(id -g)" >> .env
 
 ## 基本的な使い方
 
-### 1. ビルド
+### 1. データディレクトリの準備
+
+全てのファイル操作は`data/`ディレクトリ内で行われます。
+コマンド実行時は、このディレクトリがコンテナ内の`/data`にマウントされ、作業ディレクトリとして使用されます。
+
+### 2. ビルド
 
 ```bash
 docker-compose build
 ```
 
-### 2. VCFファイルからCSEGファイルの生成
+### 3. VCFファイルからCSEGファイルの生成
 
 ```bash
-# ファイルからの変換
+# VCFファイルをdata/ディレクトリに配置してから実行
 docker-compose run --rm vcf2cseg input.vcf
+#出力ファイル名はdata/input.cseg
 
-# 標準入力からの変換
-cat input.vcf | docker-compose run --rm vcf2cseg
-
-# 出力ファイルの指定
+#出力ファイル名を指定する場合
 docker-compose run --rm vcf2cseg input.vcf -o output.cseg
-```
-生成されたCSEGファイルは、デフォルトで`.data/input.cseg`に保存されます。
 
-### 3. データベースの作成
+# 標準入力を使用する場合（必要な場合のみ）
+cat data/input.vcf | docker-compose run --rm vcf2cseg -T > data/output.cseg
+```
+
+### 4. データベースの作成
 
 ```bash
-# デフォルトのデータベースファイル（.data/input.db）を作成
+# CSEGファイルからデータベースを作成
 docker-compose run --rm create-db input.cseg
+#出力ファイル名はdata/input.db
+
+#出力ファイル名を指定する場合
+docker-compose run --rm create-db input.cseg -o output.db
+
+# 標準入力を使用する場合（必要な場合のみ）
+cat data/input.cseg | docker-compose run --rm create-db > data/output.db
 ```
 
-### 4. Webサーバーの起動
+注意：
+- 入力ファイルは事前に`data/`ディレクトリに配置してください
+- 出力ファイルは自動的に`data/`ディレクトリに生成されます
+- コマンド実行時のファイル名指定では`data/`プレフィックスは不要です
+
+### 5. Webサーバーの起動
 
 ```bash
 # サーバーの起動（デフォルトポート：5000）
@@ -103,7 +120,7 @@ docker-compose up
 ### 1. トラックの設定
 
 必要に応じて`jbrowse_config.json`を編集してください。
-"uri": "http://localhost:5000?cseg=190070"は.data/190070.dbを表示します。
+"uri": "http://localhost:5000?cseg=input"は`data/input.db`を表示します。
 
 ## 開発環境のセットアップ
 
