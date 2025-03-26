@@ -141,6 +141,7 @@ yarn browse
 
 必要に応じて`jbrowse_config.json`を編集してください。
 "uri": "http://localhost:5000?cseg=input"は`data/input.db`を表示します。
+デフォルトではReference sequence (OPERA_SAMBA)とOriginal (merge1.02.GT.84)とCorrect6 (merge1.02.GT.84.correct6)の3つのトラックが設定されており、チェックを入れたものが表示されます。csegトラックの画像生成には時間がかかるため両方にチェックを入れると遅くなります。
 
 ## 開発環境のセットアップ
 

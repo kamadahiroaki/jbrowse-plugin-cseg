@@ -28,8 +28,8 @@
   "tracks": [
     {
       "type": "CSEGTrack",
-      "trackId": "cseg_plugin_track",
-      "name": "CsegTrack",
+      "trackId": "cseg_plugin_track_original",
+      "name": "Original",
       "category": [
         "Visualization"
       ],
@@ -38,15 +38,43 @@
       ],
       "adapter": {
         "type": "CsegAdapter",
-        "CsegAdapterId": "CsegAdapterId",
+        "CsegAdapterId": "CsegAdapterId_original",
         "base": {
-          "uri": "http://localhost:5000?cseg=190070"
+          "uri": "http://localhost:5000?cseg=merge1.02.GT.84"
         }
       },
       "displays": [
         {
           "type": "CsegDisplay",
-          "displayId": "cseg_plugin_track_linear",
+          "displayId": "cseg_plugin_track_linear_original",
+          "renderer": {
+            "type": "CsegRenderer",
+            "height": 1200
+          }
+        }
+      ]
+    },
+    {
+      "type": "CSEGTrack",
+      "trackId": "cseg_plugin_track_correct6",
+      "name": "Correct6",
+      "category": [
+        "Visualization"
+      ],
+      "assemblyNames": [
+        "OPERA_SAMBA"
+      ],
+      "adapter": {
+        "type": "CsegAdapter",
+        "CsegAdapterId": "CsegAdapterId_correct6",
+        "base": {
+          "uri": "http://localhost:5000?cseg=merge1.02.GT.84.correct6"
+        }
+      },
+      "displays": [
+        {
+          "type": "CsegDisplay",
+          "displayId": "cseg_plugin_track_linear_correct6",
           "renderer": {
             "type": "CsegRenderer",
             "height": 400
