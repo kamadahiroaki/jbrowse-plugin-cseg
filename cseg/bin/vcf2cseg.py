@@ -2,37 +2,85 @@
 import sys
 import argparse
 import pathlib
+from typing import TextIO, Iterator, Tuple
+
+def read_vcf_by_contig(file: TextIO) -> Iterator[Tuple[str, list[str]]]:
+    """VCFファイルをcontigごとに読み込むジェネレータ"""
+    current_contig = None
+    current_lines = []
+    
+    for line in file:
+        if line.startswith('#'):
+            continue
+            
+        if not line.strip():
+            continue
+            
+        fields = line.split('\t', 1)
+        if not fields:
+            continue
+            
+        contig = fields[0]
+        
+        if current_contig is None:
+            current_contig = contig
+            
+        if contig != current_contig:
+            if current_lines:  # 空でない場合のみyield
+                yield current_contig, current_lines
+            current_lines = []
+            current_contig = contig
+            
+        current_lines.append(line)
+    
+    if current_lines:  # 最後のcontigのデータ
+        yield current_contig, current_lines
 
 def vcf_to_cseg(vcf_file: pathlib.Path, cseg_file: pathlib.Path = None, use_stdin: bool = False):
     """VCFファイルをCSEGファイルに変換する"""
-    # VCFファイルの内容を読み込む
-    if use_stdin:
-        print("Reading from stdin...", file=sys.stderr)
-        vcf_content = sys.stdin.read()
-    else:
-        print(f"Reading file: {vcf_file}", file=sys.stderr)
-        if not vcf_file.exists():
-            raise FileNotFoundError(f"Input file not found: {vcf_file}")
-        with open(vcf_file, 'r') as f:
-            vcf_content = f.read()
+    # 出力ファイル名の設定
+    if not use_stdin and cseg_file is None:
+        cseg_file = vcf_file.with_suffix('.cseg')
 
-    # C++の関数を呼び出してCSEGデータを生成
-    print("Converting to CSEG format...", file=sys.stderr)
-    from .vcf2cseg_cpp import convert_vcf_to_cseg
-    cseg_data = convert_vcf_to_cseg(vcf_content)
+    # C++モジュールのインポート
+    from .vcf2cseg_cpp import process_vcf_chunk
 
-    # CSEGファイルに保存またはstdoutに出力
-    if not use_stdin:
-        # 出力ファイル名が指定されていない場合は、入力ファイル名から自動生成
-        if cseg_file is None:
-            cseg_file = vcf_file.with_suffix('.cseg')
-        print(f"Writing to file: {cseg_file}", file=sys.stderr)
-        with open(cseg_file, 'w') as f:
-            f.write(cseg_data)
-    else:
-        sys.stdout.write(cseg_data)
+    try:
+        if use_stdin:
+            print("Reading from stdin...", file=sys.stderr)
+            input_file = sys.stdin
+        else:
+            print(f"Reading file: {vcf_file}", file=sys.stderr)
+            if not vcf_file.exists():
+                raise FileNotFoundError(f"Input file not found: {vcf_file}")
+            input_file = open(vcf_file, 'r')
 
-    return cseg_file
+        # 出力ファイルを開く（標準入力モードの場合は標準出力を使用）
+        output_file = sys.stdout if use_stdin else open(cseg_file, 'w')
+
+        try:
+            # contigごとに処理
+            for contig, lines in read_vcf_by_contig(input_file):
+                if not lines:  # 空のcontigをスキップ
+                    continue
+                print(f"\rProcessing contig {contig}...", end='', file=sys.stderr, flush=True)
+                chunk = ''.join(lines)
+                result = process_vcf_chunk(chunk)
+                if result:
+                    output_file.write(result)
+
+            print("\nConversion completed", file=sys.stderr)
+            return cseg_file
+
+        finally:
+            if not use_stdin:
+                input_file.close()
+            if not use_stdin:
+                output_file.close()
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise
 
 def main():
     parser = argparse.ArgumentParser(description='Convert VCF file to CSEG format')

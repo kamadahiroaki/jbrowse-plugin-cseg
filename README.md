@@ -61,10 +61,19 @@ echo "GID=$(id -g)" >> .env
 
 ## 基本的な使い方
 
-### 1. データディレクトリの準備
+### 1. データの準備
 
 全てのファイル操作は`data/`ディレクトリ内で行われます。
 コマンド実行時は、このディレクトリがコンテナ内の`/data`にマウントされ、作業ディレクトリとして使用されます。
+```bash
+yarn setup
+```
+で作成された`.jbrowse`ディレクトリに.faおよび.fa.faiファイルを配置してください。
+医科研スパコンの/home/kamada/shared/にシャジクモのデータOPERA_SAMBA.faとOPERA_SAMBA.fa.faiがあります。
+.vcfファイルは`data/`ディレクトリに配置してください。
+merge1.02.GT.84.vcfが異常なSNPと個体を除外したデータです。
+merge1.02.GT.84.correct6.vcfはさらに同じジェノタイプの連続回数が6回未満の箇所を欠損値扱いにしたデータで、シークエンスエラーと狭い範囲のミスアセンブリが修正されています。
+
 
 ### 2. ビルド
 
@@ -114,6 +123,17 @@ docker-compose up
 
 サーバーは`http://localhost:5000`でアクセス可能です。
 通常はJBrowseプラグインを通してアクセスします。
+
+### 6. JBrowseの起動
+
+```bash
+# プラグインの起動
+yarn start
+
+# JBrowseの起動
+yarn browse
+```
+
 
 ## JBrowseでの設定
 
