@@ -6,12 +6,19 @@ JBrowse 2のプラグインとして、VCFファイルから生成されたCSEG�
 
 ## インストール方法
 
-### 0. nodeのインストール
+### 0. node,dockerのインストール
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
 sudo apt-get install -y nodejs
 sudo npm install -g yarn
+```
+
+```bash
+sudo curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+sudo newgrp docker
 ```
 
 ### 1. プラグインのインストール
@@ -39,7 +46,7 @@ VCFファイルの変換やデータベース作成などの周辺ツールはDo
 
 ```bash
 # Dockerイメージのビルド
-docker-compose build
+docker compose build
 ```
 
 ## 初期セットアップ
@@ -78,35 +85,35 @@ merge1.02.GT.84.correct6.vcfはさらに同じジェノタイプの連続回数�
 ### 2. ビルド
 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 ### 3. VCFファイルからCSEGファイルの生成
 
 ```bash
 # VCFファイルをdata/ディレクトリに配置してから実行
-docker-compose run --rm vcf2cseg input.vcf
+docker compose run --rm vcf2cseg input.vcf
 #出力ファイル名はdata/input.cseg
 
 #出力ファイル名を指定する場合
-docker-compose run --rm vcf2cseg input.vcf -o output.cseg
+docker compose run --rm vcf2cseg input.vcf -o output.cseg
 
 # 標準入力を使用する場合（必要な場合のみ）
-cat data/input.vcf | docker-compose run --rm vcf2cseg -T > data/output.cseg
+cat data/input.vcf | docker compose run --rm vcf2cseg -T > data/output.cseg
 ```
 
 ### 4. データベースの作成
 
 ```bash
 # CSEGファイルからデータベースを作成
-docker-compose run --rm create-db input.cseg
+docker compose run --rm create-db input.cseg
 #出力ファイル名はdata/input.db
 
 #出力ファイル名を指定する場合
-docker-compose run --rm create-db input.cseg -o output.db
+docker compose run --rm create-db input.cseg -o output.db
 
 # 標準入力を使用する場合（必要な場合のみ）
-cat data/input.cseg | docker-compose run --rm create-db > data/output.db
+cat data/input.cseg | docker compose run --rm create-db > data/output.db
 ```
 
 注意：
@@ -118,7 +125,7 @@ cat data/input.cseg | docker-compose run --rm create-db > data/output.db
 
 ```bash
 # サーバーの起動（デフォルトポート：5000）
-docker-compose up
+docker compose up
 ```
 
 サーバーは`http://localhost:5000`でアクセス可能です。
