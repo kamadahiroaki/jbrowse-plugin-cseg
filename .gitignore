@@ -13,7 +13,9 @@ data/*
 *.swp
 .DS_Store
 
-# Logs
+# Logs and PID files
+/logs/
+/run/
 logs
 *.log
 npm-debug.log*

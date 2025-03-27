@@ -133,14 +133,41 @@ docker compose up
 
 ### 6. JBrowseの起動
 
-```bash
-# プラグインの起動
-yarn start
+#### オプション1: デーモンモードで実行（推奨）
 
-# JBrowseの起動
-yarn browse
+```bash
+# サービスをバックグラウンドで起動
+./start-daemon.sh
+
+# サービスの停止
+./stop-daemon.sh
 ```
 
+サービスはバックグラウンドで実行され、ログは`logs/`ディレクトリに保存されます。
+ログアウトしても実行は継続されます。
+
+#### オプション2: フォアグラウンドで実行
+
+```bash
+# すべてのサービスを起動し、ログをリアルタイム表示
+./start-all.sh
+```
+
+このスクリプトは、Docker Composeサービス、yarn browse、およびyarn startをすべて同時に起動します。
+すべてのログは`logs/`ディレクトリに保存されます。Ctrl+Cを押してすべてのサービスを停止します。
+
+#### オプション3: 手動でサービスを管理する
+
+```bash
+# Dockerサービスを起動
+docker compose up
+
+# 別の端末で
+yarn browse
+
+# 別の端末で
+yarn start
+```
 
 ## JBrowseでの設定
 
