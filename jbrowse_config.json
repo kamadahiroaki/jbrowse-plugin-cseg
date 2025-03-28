@@ -49,7 +49,7 @@
           "displayId": "cseg_plugin_track_linear_original",
           "renderer": {
             "type": "CsegRenderer",
-            "height": 1200
+            "height": 400
           }
         }
       ]

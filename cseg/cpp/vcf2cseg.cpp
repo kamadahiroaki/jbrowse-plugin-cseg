@@ -88,26 +88,27 @@ void processContigData(const string &contig, const vector<VcfRecord> &contigData
             {
                 if (i < contigCsegData.size() && contigCsegData[i].genotypes[j] != "0")
                 {
-                    for (int k = lastpos + 1; k < i; k++)
-                    {
-                        contigCsegData[k].genotypes[j] = to_string(stoi(contigCsegData[i].genotypes[j]) + 2);
-                    }
                     lastpos = i;
                 }
             }
-            else if (i == contigCsegData.size() || contigCsegData[i].genotypes[j] == contigCsegData[lastpos].genotypes[j])
+            else if (i == contigCsegData.size() || contigCsegData[i].genotypes[j] != "0")
             {
-                for (int k = lastpos + 1; k < i; k++)
+                // 値が異なる場合は白（"0"）を設定
+                if (i < contigCsegData.size() && contigCsegData[i].genotypes[j] != contigCsegData[lastpos].genotypes[j])
                 {
-                    contigCsegData[k].genotypes[j] = contigCsegData[lastpos].genotypes[j];
+                    for (int k = lastpos + 1; k < i; k++)
+                    {
+                        contigCsegData[k].genotypes[j] = "0";
+                    }
                 }
-                lastpos = i;
-            }
-            else if (contigCsegData[i].genotypes[j] != "0")
-            {
-                for (int k = lastpos + 1; k < i; k++)
+                // 値が同じ場合は薄い色（+2）を設定
+                else
                 {
-                    contigCsegData[k].genotypes[j] = to_string(stoi(contigCsegData[i].genotypes[j]) + 2);
+                    string baseValue = (i < contigCsegData.size()) ? contigCsegData[i].genotypes[j] : contigCsegData[lastpos].genotypes[j];
+                    for (int k = lastpos + 1; k < i; k++)
+                    {
+                        contigCsegData[k].genotypes[j] = to_string(stoi(baseValue) + 2);
+                    }
                 }
                 lastpos = i;
             }

@@ -171,6 +171,18 @@ yarn start
 
 ## JBrowseでの設定
 
+### カスタム設定ファイルの使用
+
+異なる設定ファイルを使用する場合は、`CONFIG_FILE`環境変数を指定します：
+
+```bash
+# カスタム設定ファイルを使用
+CONFIG_FILE=custom_config.json yarn browse
+
+# デーモンモードで実行する場合
+CONFIG_FILE=custom_config.json ./start-daemon.sh
+```
+
 ### 1. トラックの設定
 
 必要に応じて`jbrowse_config.json`を編集してください。
