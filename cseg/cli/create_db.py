@@ -33,12 +33,6 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
     """CSEGファイルを読み込んでデータベースに格納する"""
     print(f"Creating database {db_path} from {cseg_file}")
 
-    # サンプル数を取得
-    with open(cseg_file) as f:
-        first_line = f.readline().strip()
-        n_samples = len(first_line.split('\t')) - 2
-        print(f"Number of samples: {n_samples}")
-
     # 既存のデータベースを削除
     if db_path.exists():
         db_path.unlink()
@@ -67,10 +61,6 @@ def process_cseg_file(cseg_file: pathlib.Path, db_path: pathlib.Path):
 
         with open(cseg_file) as f:
             with tqdm(total=n_lines, desc="Loading data") as pbar:
-                # 最初の行を読み飛ばす（既に読んでいるため）
-                next(f)
-                pbar.update(1)
-
                 for line in f:
                     parts = line.strip().split('\t')
                     if len(parts) < 3:

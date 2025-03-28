@@ -84,12 +84,16 @@ def serve_image():
         return f'Database file {db_file} not found', 404
     
     try:
+        # JBrowseの0-baseからVCFの1-baseに変換
+        query_start = start + 1
+        query_end = end + 1
+
         # 画像を生成
         img = create_image_from_db(
             db_file,
             ref_name,
-            start,
-            end,
+            query_start,
+            query_end,
             canvas_width=width,
             sample_height=sample_height
         )

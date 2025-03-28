@@ -106,13 +106,13 @@ py::array_t<uint8_t> create_cseg_image(
         // x座標を計算
         int x1, x2;
         if (start == end) {
-            int x = static_cast<int>((start - region_start) * scale);
-            x = std::min(x, canvas_width - 1);
-            x1 = x;
-            x2 = x + 1;
+            // 単一塩基位置の場合、その位置から始まり1塩基分の幅を持つ
+            x1 = std::max(0, static_cast<int>((start - region_start) * scale));
+            x2 = std::min(canvas_width, static_cast<int>(((start + 1) - region_start) * scale));
+            if (x2 <= x1) x2 = x1 + 1;  // 最低1ピクセルは確保
         } else {
             x1 = std::max(0, static_cast<int>((start - region_start) * scale));
-            x2 = std::min(canvas_width, static_cast<int>((end - region_start) * scale + 1));
+            x2 = std::min(canvas_width, static_cast<int>((end + 1 - region_start) * scale));
         }
 
         if (x2 <= x1) {
