@@ -1,0 +1,58 @@
+{
+  "plugins": [
+    {
+      "name": "Cseg",
+      "url": "http://localhost:9000/dist/cseg.umd.development.js"
+    }
+  ],
+  "assemblies": [
+    {
+      "name": "OPERA_SAMBA",
+      "sequence": {
+        "type": "ReferenceSequenceTrack",
+        "trackId": "OPERA_SAMBA-ReferenceSequenceTrack",
+        "adapter": {
+          "type": "IndexedFastaAdapter",
+          "fastaLocation": {
+            "uri": "OPERA_SAMBA.fa",
+            "locationType": "UriLocation"
+          },
+          "faiLocation": {
+            "uri": "OPERA_SAMBA.fa.fai",
+            "locationType": "UriLocation"
+          }
+        }
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "type": "CSEGTrack",
+      "trackId": "cseg_plugin_track_1-2",
+      "name": "1-2",
+      "category": [
+        "Visualization"
+      ],
+      "assemblyNames": [
+        "OPERA_SAMBA"
+      ],
+      "adapter": {
+        "type": "CsegAdapter",
+        "CsegAdapterId": "CsegAdapterId_1-2",
+        "base": {
+          "uri": "http://localhost:5000?cseg=190070.2"
+        }
+      },
+      "displays": [
+        {
+          "type": "CsegDisplay",
+          "displayId": "cseg_plugin_track_linear_1-2",
+          "renderer": {
+            "type": "CsegRenderer",
+            "height": 400
+          }
+        }
+      ]
+    }
+  ]
+}
