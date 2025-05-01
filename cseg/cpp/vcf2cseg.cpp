@@ -82,6 +82,26 @@ void processContigData(const string &contig, const vector<VcfRecord> &contigData
     for (int j = 0; j < contigCsegData[0].genotypes.size(); j++)
     {
         int lastpos = -1;
+        int firstNonZeroPos = -1;
+        
+        // First pass: find first non-zero value
+        for (int i = 0; i < contigCsegData.size(); i++) {
+            if (contigCsegData[i].genotypes[j] != "0") {
+                firstNonZeroPos = i;
+                break;
+            }
+        }
+        
+        // Handle initial zeros if there's a non-zero value
+        if (firstNonZeroPos >= 0) {
+            string firstNonZeroValue = contigCsegData[firstNonZeroPos].genotypes[j];
+            // Set all leading zeros to firstNonZeroValue + 2
+            for (int i = 0; i < firstNonZeroPos; i++) {
+                contigCsegData[i].genotypes[j] = to_string(stoi(firstNonZeroValue) + 2);
+            }
+        }
+        
+        // Process intervals between non-zero values (middle part)
         for (int i = 0; i <= contigCsegData.size(); i++)
         {
             if (lastpos < 0)
@@ -111,6 +131,28 @@ void processContigData(const string &contig, const vector<VcfRecord> &contigData
                     }
                 }
                 lastpos = i;
+            }
+        }
+        
+        // Handle trailing zeros if there was any non-zero value
+        if (firstNonZeroPos >= 0) {
+            int lastNonZeroPos = -1;
+            // Find last non-zero position
+            for (int i = contigCsegData.size() - 1; i >= 0; i--) {
+                if (contigCsegData[i].genotypes[j] != "0") {
+                    lastNonZeroPos = i;
+                    break;
+                }
+            }
+            
+            if (lastNonZeroPos >= 0 && lastNonZeroPos < contigCsegData.size() - 1) {
+                string lastNonZeroValue = contigCsegData[lastNonZeroPos].genotypes[j];
+                // Set all trailing zeros to lastNonZeroValue + 2
+                for (int i = lastNonZeroPos + 1; i < contigCsegData.size(); i++) {
+                    if (contigCsegData[i].genotypes[j] == "0") {
+                        contigCsegData[i].genotypes[j] = to_string(stoi(lastNonZeroValue) + 2);
+                    }
+                }
             }
         }
     }
